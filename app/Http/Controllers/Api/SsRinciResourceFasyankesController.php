@@ -3,28 +3,27 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Imports\SsTahapanFasyankesImport;
-use App\Models\SsTahapanFasyankes;
+use App\Imports\SsRinciResourceFasyankesImport;
+use App\Models\SsRinciResourceFasyankes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 
-class SsTahapanFasyankesController extends Controller
+class SsRinciResourceFasyankesController extends Controller
 {
     public function index(): JsonResponse
     {
-        $data = SsTahapanFasyankes::query()
+        $data = SsRinciResourceFasyankes::query()
             ->latest('updated_at')
             ->paginate(20);
-            // ->get();
 
         return response()->json($data);
     }
 
     public function show(string $kode_sarana): JsonResponse
     {
-        $data = SsTahapanFasyankes::query()
+        $data = SsRinciResourceFasyankes::query()
             ->where('kode_sarana', $kode_sarana)
             ->firstOrFail();
 
@@ -35,14 +34,14 @@ class SsTahapanFasyankesController extends Controller
     {
         $payload = $this->validatePayload($request, true);
 
-        $data = SsTahapanFasyankes::query()->create($payload);
+        $data = SsRinciResourceFasyankes::query()->create($payload);
 
         return response()->json($data, 201);
     }
 
     public function update(Request $request, string $kode_sarana): JsonResponse
     {
-        $data = SsTahapanFasyankes::query()
+        $data = SsRinciResourceFasyankes::query()
             ->where('kode_sarana', $kode_sarana)
             ->firstOrFail();
 
@@ -55,7 +54,7 @@ class SsTahapanFasyankesController extends Controller
 
     public function destroy(string $kode_sarana): JsonResponse
     {
-        $data = SsTahapanFasyankes::query()
+        $data = SsRinciResourceFasyankes::query()
             ->where('kode_sarana', $kode_sarana)
             ->firstOrFail();
 
@@ -79,7 +78,7 @@ class SsTahapanFasyankesController extends Controller
         ]);
 
         try {
-            Excel::import(new SsTahapanFasyankesImport(), $validated['file']);
+            Excel::import(new SsRinciResourceFasyankesImport(), $validated['file']);
 
             return response()->json([
                 'message' => 'Import completed successfully.',
@@ -94,23 +93,36 @@ class SsTahapanFasyankesController extends Controller
 
     private function validatePayload(Request $request, bool $isCreate, ?int $ignoreId = null): array
     {
-        $kodeRules = ['required', 'string', 'max:255', 'unique:ss_tahapan_fasyankes,kode_sarana'];
+        $kodeRules = ['required', 'string', 'max:255', 'unique:ss_rinci_resource_fasyankes,kode_sarana'];
 
         if (!$isCreate) {
-            $kodeRules = ['sometimes', 'string', 'max:255', 'unique:ss_tahapan_fasyankes,kode_sarana,' . $ignoreId];
+            $kodeRules = ['sometimes', 'string', 'max:255', 'unique:ss_rinci_resource_fasyankes,kode_sarana,' . $ignoreId];
         }
 
+        $requiredOrSometimes = $isCreate ? 'required' : 'sometimes';
+
         return $request->validate([
-            'lokasi' => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255'],
-            'id_organisasi' => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255'],
-            'nama_fasyankes' => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255'],
+            'id_organisasi' => [$requiredOrSometimes, 'string', 'max:255'],
+            'nama_fasyankes' => [$requiredOrSometimes, 'string', 'max:255'],
+            'lokasi' => [$requiredOrSometimes, 'string', 'max:255'],
             'kode_sarana' => $kodeRules,
-            'jenis_sarana' => [$isCreate ? 'required' : 'sometimes', 'string', 'max:255'],
-            'alamat_fasyankes' => [$isCreate ? 'required' : 'sometimes', 'string'],
-            'terdaftar' => [$isCreate ? 'required' : 'sometimes', 'boolean'],
-            'terkoneksi' => [$isCreate ? 'required' : 'sometimes', 'boolean'],
-            'terintegrasi' => [$isCreate ? 'required' : 'sometimes', 'boolean'],
-            'jumlah_tahapan' => [$isCreate ? 'required' : 'sometimes', 'integer', 'min:0', 'max:255'],
+            'jenis_sarana' => [$requiredOrSometimes, 'string', 'max:255'],
+            'kunjungan_pasien' => [$requiredOrSometimes, 'boolean'],
+            'kondisi_diagnosis' => [$requiredOrSometimes, 'boolean'],
+            'observasi' => [$requiredOrSometimes, 'boolean'],
+            'tindakan' => [$requiredOrSometimes, 'boolean'],
+            'resume_diet' => [$requiredOrSometimes, 'boolean'],
+            'resep_obat' => [$requiredOrSometimes, 'boolean'],
+            'tebus_obat' => [$requiredOrSometimes, 'boolean'],
+            'permintaan_pemeriksaan' => [$requiredOrSometimes, 'boolean'],
+            'spesimen' => [$requiredOrSometimes, 'boolean'],
+            'laporan_pemeriksaan' => [$requiredOrSometimes, 'boolean'],
+            'alergi_intoleran' => [$requiredOrSometimes, 'boolean'],
+            'impresi_klinis' => [$requiredOrSometimes, 'boolean'],
+            'rencana_perawatan' => [$requiredOrSometimes, 'boolean'],
+            'respon_kuesioner' => [$requiredOrSometimes, 'boolean'],
+            'catatan_pengobatan' => [$requiredOrSometimes, 'boolean'],
+            'jumlah_tahapan' => [$requiredOrSometimes, 'integer', 'min:0', 'max:255'],
         ]);
     }
 }
